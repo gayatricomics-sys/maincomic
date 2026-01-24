@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #111;
+            color: lime;
+            padding: 20px;
+        }
+
+        h1 {
+            border-bottom: 1px solid lime;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>ADMIN DASHBOARD (/junnu)</h1>
+    <p>Welcome, Admin!</p>
+    <p>Checking privileges...</p>
+    <div id="content"></div>
+
+    <script>
+        async function checkAdmin() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.body.innerHTML = "<h1>ACCESS DENIED</h1>";
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/check', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+
+                if (data.isAdmin) {
+                    document.getElementById('content').innerHTML = `
+                        <p>Status: <strong>AUTHORIZED</strong></p>
+                        <p>User: gayathri5670@gmail.com</p>
+                        <p>System Status: Operational</p>
+                    `;
+                } else {
+                    document.body.innerHTML = "<h1>ACCESS DENIED (Not Admin)</h1>";
+                }
+            } catch (e) {
+                document.body.innerHTML = "<h1>ACCESS DENIED (Error)</h1>";
+            }
+        }
+        checkAdmin();
+    </script>
+</body>
+
+</html>

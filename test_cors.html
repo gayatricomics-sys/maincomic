@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CORS Diagnostic</title>
+</head>
+
+<body>
+    <h1>CORS Test</h1>
+    <div id="logs"></div>
+    <div id="results"></div>
+
+    <script>
+        function log(msg, color = 'black') {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.style.color = color;
+            document.getElementById('logs').appendChild(div);
+        }
+
+        function createImg(url, useCors, label) {
+            const div = document.createElement('div');
+            div.style.border = "1px solid #ccc";
+            div.style.margin = "10px";
+            div.style.padding = "10px";
+            div.innerHTML = `<strong>${label}</strong><br>`;
+
+            const img = new Image();
+            img.width = 200;
+            if (useCors) img.crossOrigin = "anonymous";
+
+            img.onload = () => {
+                log(`[SUCCESS] ${label} loaded (CORS: ${useCors})`, 'green');
+                div.innerHTML += " LOADED";
+                div.appendChild(img);
+            };
+
+            img.onerror = (e) => {
+                log(`[ERROR] ${label} failed (CORS: ${useCors})`, 'red');
+                div.innerHTML += " FAILED";
+            };
+
+            img.src = url;
+            document.getElementById('results').appendChild(div);
+        }
+
+        // Test URLs
+        const POLLINATIONS_FLUX = "https://pollinations.ai/p/cyberpunk%20city?width=1024&height=1024&seed=123&model=flux&nologo=true";
+        const POLLINATIONS_TURBO = "https://pollinations.ai/p/cyberpunk%20city?width=1024&height=1024&seed=456&model=turbo&nologo=true";
+
+        window.onload = function () {
+            log("Starting Tests...");
+            createImg(POLLINATIONS_FLUX, true, "Flux (with 'anonymous')");
+            createImg(POLLINATIONS_FLUX, false, "Flux (standard)");
+            createImg(POLLINATIONS_TURBO, true, "Turbo (with 'anonymous')");
+        };
+    </script>
+</body>
+
+</html>

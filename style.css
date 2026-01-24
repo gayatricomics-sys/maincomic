@@ -1,0 +1,714 @@
+:root {
+    /* Premium Palette using OKLCH for vibrancy */
+    --primary: #FF4757;
+    /* Vibrant Red-Pink */
+    --primary-hover: #FF6B81;
+    --secondary: #3742FA;
+    /* Electric Blue */
+    --accent: #2ED573;
+    /* Neon Green */
+
+    --bg-dark: #0A0A0A;
+    /* Deep Black */
+    --bg-card: #151515;
+    /* Slightly Lighter */
+    --bg-input: #232323;
+
+    --text-main: #FFFFFF;
+    --text-muted: #A4B0BE;
+
+    --border: #2F3542;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(20, 20, 20, 0.7);
+
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+    --comic-border: 4px solid #000;
+    --comic-gap: 24px;
+
+    /* Modern Typography */
+    --font-heading: 'Bangers', display;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-comic: 'Comic Neue', cursive;
+}
+
+/* Hide app until auth check passes */
+.app-container {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.auth-verified .app-container {
+    display: flex;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Header */
+.app-header {
+    height: 70px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 50;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, var(--primary), #FF9F43);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(255, 71, 87, 0.3));
+}
+
+.logo h1 {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    letter-spacing: 1.5px;
+}
+
+/* Main Layout */
+.main-content {
+    display: flex;
+    flex: 1;
+    margin-top: 70px;
+    /* Offset fixed header */
+    height: calc(100vh - 70px);
+}
+
+/* Sidebar */
+.sidebar {
+    width: 380px;
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    gap: 24px;
+    overflow-y: auto;
+    z-index: 40;
+    box-shadow: var(--shadow-sm);
+}
+
+.panel-section h2 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-section h2::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 16px;
+    background: var(--secondary);
+    border-radius: 2px;
+}
+
+.helper-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+textarea {
+    width: 100%;
+    height: 160px;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-main);
+    padding: 16px;
+    font-family: var(--font-body);
+    resize: vertical;
+    font-size: 15px;
+    line-height: 1.6;
+    transition: all 0.2s;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(55, 66, 250, 0.2);
+    background-color: #2a2a2a;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* Style Grid */
+.style-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.style-card {
+    background-color: var(--bg-input);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 16px 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.style-card:hover {
+    background-color: #333;
+}
+
+.style-card.active {
+    border-color: var(--primary);
+    background-color: rgba(255, 82, 82, 0.1);
+}
+
+.style-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.style-name {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Model Selector */
+.model-select {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.model-select:focus {
+    outline: none;
+    border-color: var(--secondary);
+}
+
+.api-key-container {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.api-key-container.hidden {
+    display: none;
+}
+
+.api-key-container label {
+    display: block;
+    font-size: 11px;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+}
+
+.api-key-container input {
+    width: 100%;
+    padding: 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+}
+
+/* Layout Options */
+.layout-options {
+    display: flex;
+    gap: 10px;
+}
+
+.layout-btn {
+    flex: 1;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.layout-btn.active {
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+    color: white;
+}
+
+/* Buttons */
+.btn {
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: width 0.2s, background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn.primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn.primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn.secondary {
+    background-color: transparent;
+    color: var(--text-muted);
+}
+
+.btn.secondary:hover {
+    color: white;
+}
+
+.btn.outline {
+    background-color: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.btn.outline:hover:not(:disabled) {
+    border-color: var(--text-main);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn.large {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    font-family: var(--font-heading);
+}
+
+/* Comic Preview Area */
+.comic-preview-area {
+    flex: 1;
+    background-color: #0F0F0F;
+    background-image: radial-gradient(#222 1px, transparent 1px);
+    background-size: 20px 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.comic-header {
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.comic-header h2 {
+    font-family: var(--font-heading);
+    letter-spacing: 1px;
+}
+
+.comic-container {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    gap: var(--comic-gap);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.comic-panel {
+    background: white;
+    border: var(--comic-border);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.comic-panel:hover {
+    transform: scale(1.02) rotate(-1deg);
+    z-index: 5;
+}
+
+.panel-image-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 2px solid #000;
+    min-height: 200px;
+    background-color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.panel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Fill the panel */
+    object-position: center 20%;
+    /* Focus near top where faces usually are */
+    display: block;
+}
+
+.panel-text {
+    padding: 12px;
+    font-family: var(--font-comic);
+    font-size: 16px;
+    color: black;
+    background: white;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.panel-number {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #FFE100;
+    color: black;
+    padding: 4px 8px;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    border-right: 2px solid black;
+    border-bottom: 2px solid black;
+    z-index: 2;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 100px;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* Grid Layouts */
+.layout-grid .comic-panel {
+    width: calc(50% - var(--comic-gap));
+    height: 400px;
+}
+
+.layout-row-2 .comic-panel {
+    width: 100%;
+    height: 350px;
+    flex-direction: row;
+}
+
+.layout-row-2 .panel-image-container {
+    width: 60%;
+    height: 100%;
+    border-bottom: none;
+    border-right: 2px solid black;
+}
+
+.layout-row-2 .panel-text {
+    width: 40%;
+}
+
+/* ---------------------------
+   Interactive Bubbles & Controls
+   --------------------------- */
+
+.speech-bubble {
+    position: absolute;
+    background: white;
+    border: 3px solid black;
+    border-radius: 20px;
+    /* More pill-shaped for modern comics */
+    padding: 10px 15px;
+    text-align: center;
+    font-family: 'Comic Neue', cursive, sans-serif;
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 1.2;
+    color: black;
+    min-width: 80px;
+    max-width: 200px;
+    /* Prevent being too wide */
+    cursor: move;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    /* Ensure above image */
+    user-select: none;
+    background-color: #fff;
+}
+
+/* Tail for speech bubble - simplified for draggable use */
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 20%;
+    border-width: 15px 15px 0;
+    border-style: solid;
+    border-color: black transparent;
+    display: block;
+    width: 0;
+}
+
+.speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 20%;
+    border-width: 13px 13px 0;
+    border-style: solid;
+    border-color: white transparent;
+    display: block;
+    width: 0;
+    z-index: 1;
+}
+
+/* Panel Controls Overlay */
+.panel-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 8px;
+    display: flex;
+    gap: 5px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 20;
+}
+
+.comic-panel:hover .panel-controls {
+    opacity: 1;
+}
+
+.control-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.control-btn:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+}
+
+.control-btn.loading {
+    animation: spin 1s infinite linear;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Hide fallback text when interactive bubbles are active */
+.panel-text.hidden {
+    display: none !important;
+}
+
+
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+    width: 300px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.progress-bar {
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .comic-preview-area {
+        height: auto;
+        min-height: 500px;
+    }
+
+    .layout-grid .comic-panel {
+        width: 100%;
+    }
+
+    .layout-row-2 .comic-panel {
+        flex-direction: column;
+    }
+
+    .layout-row-2 .panel-image-container {
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 2px solid black;
+    }
+
+    /* Debug Console */
+    #debug-console {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 150px;
+        background: rgba(0, 0, 0, 0.9);
+        color: #0f0;
+        font-family: monospace;
+        font-size: 12px;
+        padding: 10px;
+        overflow-y: auto;
+        z-index: 9999;
+        border-top: 2px solid #0f0;
+        pointer-events: none;
+        /* Let clicks pass through unless we need to select text */
+        pointer-events: auto;
+    }
+
+    .debug-log {
+        margin-bottom: 4px;
+        border-bottom: 1px solid #333;
+    }
+
+    .debug-error {
+        color: #f55;
+    }
+
+    .debug-success {
+        color: #5f5;
+    }
+}

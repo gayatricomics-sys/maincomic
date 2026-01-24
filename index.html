@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComicForge - AI Comic Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2canvas and jsPDF for export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-paintbrush"></i>
+                <h1>ComicForge</h1>
+            </div>
+            <div class="header-actions">
+                <a href="pricing.html" class="btn secondary"
+                    style="font-weight:bold; color:#FFE100; margin-right:10px;">
+                    <i class="fa-solid fa-coins"></i> <span id="credit-display">Loading...</span>
+                </a>
+
+                <a href="profile.html" class="btn secondary" style="margin-right:15px; color:white;">
+                    <i class="fa-solid fa-user-circle"></i> Profile
+                </a>
+
+                <div style="margin-right:15px; font-size:14px; color:rgba(255,255,255,0.7);">
+                    <i class="fa-solid fa-user"></i> <span id="user-display">User</span>
+                </div>
+                <button id="logout-btn" class="btn secondary" style="font-size:12px; padding:6px 12px;">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <aside class="sidebar">
+                <div class="panel-section">
+                    <h2>1. Write Your Story</h2>
+                    <p class="helper-text">Format: "Panel 1: Description..." or just write a story!</p>
+                    <textarea id="script-input" placeholder="Panel 1: A superhero flying over the city
+Panel 2: Landing on a rooftop
+Panel 3: Looking at the sunset"></textarea>
+                    <div class="char-count">0 characters</div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>2. Choose Art Style</h2>
+                    <div class="style-grid" id="style-selector">
+                        <!-- Styles injected via JS -->
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>3. AI Model (Free Mode)</h2>
+                    <select id="model-selector" class="model-select">
+                        <option value="pollinations-flux">Flux (Best Quality)</option>
+                        <option value="pollinations-turbo">Turbo (Fastest)</option>
+                        <option value="hf-sd-2">Stable Diffusion 2.1 (HF)</option>
+                        <option value="hf-xl">SDXL 1.0 (HF)</option>
+                    </select>
+
+                    <div id="api-key-container" class="api-key-container hidden">
+                        <label for="hf-api-key">Hugging Face Token (Optional)</label>
+                        <input type="password" id="hf-api-key" placeholder="hf_...">
+                        <p class="helper-text">Required for reliable HF generation.</p>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h2>4. Layout</h2>
+                    <div class="layout-options">
+                        <button class="layout-btn active" data-layout="grid">
+                            <i class="fa-solid fa-table-cells"></i> Grid
+                        </button>
+                        <button class="layout-btn" data-layout="row-2">
+                            <i class="fa-solid fa-columns"></i> 2-Col
+                        </button>
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="btn primary large">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> CREATE COMIC
+                </button>
+            </aside>
+
+            <section class="comic-preview-area">
+                <div class="comic-header">
+                    <h2>Your Comic</h2>
+                    <div class="export-actions">
+                        <button id="export-png" class="btn outline" disabled><i class="fa-solid fa-image"></i> Save
+                            PNG</button>
+                        <button id="export-pdf" class="btn outline" disabled><i class="fa-solid fa-file-pdf"></i> Save
+                            PDF</button>
+                        <button id="export-zip" class="btn outline" disabled><i class="fa-solid fa-file-zipper"></i>
+                            Save
+                            ZIP</button>
+                    </div>
+                </div>
+
+                <div id="comic-container" class="comic-container layout-grid">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-pencil"></i>
+                        <h3>Ready to Create?</h3>
+                        <p>Enter your script and click 'Create Comic' to see the magic happen!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <h3 id="loading-text">Generating Artwork...</h3>
+            <div class="progress-bar">
+                <div id="loading-progress" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Console -->
+    <div id="debug-console">
+        <div><strong>Debug Console (Check here for errors)</strong></div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

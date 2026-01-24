@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - ComicForge</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: white;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .auth-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .links {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <h2><i class="fa-solid fa-bolt"></i> Login</h2>
+        <form id="login-form">
+            <input type="email" id="email" class="auth-input" placeholder="Email" required>
+            <input type="password" id="password" class="auth-input" placeholder="Password" required>
+            <button type="submit" class="auth-btn">Log In</button>
+        </form>
+        <div class="links">
+            <a href="signup.html">Create Account</a>
+            <a href="reset.html">Forgot Password?</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userRole', data.role);
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.error);
+                }
+            } catch (err) {
+                alert("Login failed");
+            }
+        });
+    </script>
+</body>
+
+</html>

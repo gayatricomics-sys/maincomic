@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Password - ComicForge</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: white;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <h2><i class="fa-solid fa-key"></i> Reset Password</h2>
+
+        <!-- Step 1: Request Token -->
+        <div id="step-1">
+            <p style="margin-bottom:15px; text-align:left; font-size:14px; opacity:0.8;">Enter your email. If it exists,
+                we will send a reset token to the server console.</p>
+            <input type="email" id="email" class="auth-input" placeholder="Email" required>
+            <button id="send-token-btn" class="auth-btn">Send Reset Token</button>
+        </div>
+
+        <!-- Step 2: Use Token -->
+        <div id="step-2" class="hidden">
+            <p style="margin-bottom:15px; text-align:left; font-size:14px; opacity:0.8;">Check the server console for
+                the token.</p>
+            <input type="text" id="token" class="auth-input" placeholder="Enter Token" required>
+            <input type="password" id="new-password" class="auth-input" placeholder="New Password" required>
+            <button id="reset-btn" class="auth-btn">Update Password</button>
+        </div>
+
+        <div class="links" style="margin-top:20px;">
+            <a href="login.html">Back to Login</a>
+        </div>
+    </div>
+
+    <script>
+        // Check URL for token
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        if (urlToken) {
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('token').value = urlToken;
+        }
+
+        document.getElementById('send-token-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST', body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.error) alert(data.error);
+                else {
+                    alert(data.message);
+                    document.getElementById('step-1').classList.add('hidden');
+                    document.getElementById('step-2').classList.remove('hidden');
+                }
+            } catch (e) { alert("Error sending request"); }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', async () => {
+            const token = document.getElementById('token').value;
+            const password = document.getElementById('new-password').value;
+            try {
+                const res = await fetch('/api/auth/reset-password', {
+                    method: 'POST', body: JSON.stringify({ token, password })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("Password updated! Please login.");
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) { alert("Reset failed"); }
+        });
+    </script>
+</body>
+
+</html>

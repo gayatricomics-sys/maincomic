@@ -1,0 +1,22 @@
+# Secrets
+config.env
+.env
+
+# Database
+*.db
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Generated Content
+exports/
+
+# Agent Artifacts
+.gemini/
