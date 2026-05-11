@@ -1,0 +1,11 @@
+{
+  "name": "comic-forge",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI Comic Generator",
+  "dependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.0.0",
+    "jszip": "^3.10.1"
+  }
+}

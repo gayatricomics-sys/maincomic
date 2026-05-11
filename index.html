@@ -10,7 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260409n">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- html2canvas and jsPDF for export -->
@@ -23,30 +23,26 @@
     <div class="app-container">
         <header class="app-header">
             <div class="logo">
-                <i class="fa-solid fa-paintbrush"></i>
+                <i class="fa-regular fa-square"></i>
                 <h1>ComicForge</h1>
             </div>
             <div class="header-actions">
-                <a href="pricing.html" class="btn secondary"
-                    style="font-weight:bold; color:#FFE100; margin-right:10px;">
-                    <i class="fa-solid fa-coins"></i> <span id="credit-display">Loading...</span>
-                </a>
-
-                <a href="profile.html" class="btn secondary" style="margin-right:15px; color:white;">
-                    <i class="fa-solid fa-user-circle"></i> Profile
-                </a>
-
-                <div style="margin-right:15px; font-size:14px; color:rgba(255,255,255,0.7);">
-                    <i class="fa-solid fa-user"></i> <span id="user-display">User</span>
+                <div class="header-pill">
+                    <i class="fa-regular fa-image"></i> <span id="credit-display">Ready to Generate</span>
                 </div>
-                <button id="logout-btn" class="btn secondary" style="font-size:12px; padding:6px 12px;">
-                    <i class="fa-solid fa-sign-out-alt"></i> Logout
-                </button>
+                <div class="header-pill subtle">
+                    <i class="fa-regular fa-user"></i> <span id="user-display">Guest Workspace</span>
+                </div>
             </div>
         </header>
 
         <main class="main-content">
             <aside class="sidebar">
+                <div class="wireframe-note">
+                    <h2>Workflow</h2>
+                    <p>Write panel script, choose a style, generate images, then download each panel or export the full comic.</p>
+                </div>
+
                 <div class="panel-section">
                     <h2>1. Write Your Story</h2>
                     <p class="helper-text">Format: "Panel 1: Description..." or just write a story!</p>
@@ -64,23 +60,39 @@ Panel 3: Looking at the sunset"></textarea>
                 </div>
 
                 <div class="panel-section">
-                    <h2>3. AI Model (Free Mode)</h2>
+                    <h2>3. Image Model (Pollinations)</h2>
                     <select id="model-selector" class="model-select">
-                        <option value="pollinations-flux">Flux (Best Quality)</option>
-                        <option value="pollinations-turbo">Turbo (Fastest)</option>
-                        <option value="hf-sd-2">Stable Diffusion 2.1 (HF)</option>
-                        <option value="hf-xl">SDXL 1.0 (HF)</option>
+                        <option value="pollinations-default">Pollinations Default</option>
+                        <option value="pollinations-flux">Pollinations Flux</option>
+                        <option value="pollinations-turbo">Pollinations Turbo</option>
                     </select>
 
                     <div id="api-key-container" class="api-key-container hidden">
-                        <label for="hf-api-key">Hugging Face Token (Optional)</label>
+                        <label for="hf-api-key">Token</label>
                         <input type="password" id="hf-api-key" placeholder="hf_...">
-                        <p class="helper-text">Required for reliable HF generation.</p>
+                        <p class="helper-text">Pollinations is used through the existing server proxy.</p>
                     </div>
                 </div>
 
                 <div class="panel-section">
-                    <h2>4. Layout</h2>
+                    <h2>4. Prompt Engine</h2>
+                    <select id="prompt-provider-selector" class="model-select">
+                        <option value="ollama">Ollama Local</option>
+                        <option value="pollinations">Pollinations Text</option>
+                    </select>
+                    <select id="ollama-model-selector" class="model-select">
+                        <option value="qwen3:8b">qwen3:8b</option>
+                        <option value="llama3.2:latest">llama3.2:latest</option>
+                        <option value="gemma3:1b">gemma3:1b</option>
+                        <option value="deepseek-r1:8b">deepseek-r1:8b</option>
+                        <option value="openclaw:latest">openclaw:latest</option>
+                        <option value="llava:latest">llava:latest</option>
+                    </select>
+                    <p class="helper-text">Installed Ollama models are used for local scene prompting. Image rendering still uses Pollinations.</p>
+                </div>
+
+                <div class="panel-section">
+                    <h2>5. Layout</h2>
                     <div class="layout-options">
                         <button class="layout-btn active" data-layout="grid">
                             <i class="fa-solid fa-table-cells"></i> Grid
@@ -91,15 +103,26 @@ Panel 3: Looking at the sunset"></textarea>
                     </div>
                 </div>
 
+                <div class="panel-section">
+                    <h2>6. Comic Info</h2>
+                    <input id="comic-title-input" class="voice-input" placeholder="Comic title for export">
+                    <input id="comic-credits-input" class="voice-input" placeholder="Credits text for export">
+                </div>
+
                 <button id="generate-btn" class="btn primary large">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> CREATE COMIC
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Panels
                 </button>
             </aside>
 
             <section class="comic-preview-area">
                 <div class="comic-header">
-                    <h2>Your Comic</h2>
+                    <div>
+                        <h2>Your Comic</h2>
+                        <p class="comic-subtitle">Each panel gets its own generated image and direct download button.</p>
+                    </div>
                     <div class="export-actions">
+                        <button id="save-profile-btn" class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i>
+                            Save JSON</button>
                         <button id="export-png" class="btn outline" disabled><i class="fa-solid fa-image"></i> Save
                             PNG</button>
                         <button id="export-pdf" class="btn outline" disabled><i class="fa-solid fa-file-pdf"></i> Save
@@ -107,6 +130,8 @@ Panel 3: Looking at the sunset"></textarea>
                         <button id="export-zip" class="btn outline" disabled><i class="fa-solid fa-file-zipper"></i>
                             Save
                             ZIP</button>
+                        <button id="export-ai-package" class="btn outline" disabled><i class="fa-solid fa-box-archive"></i>
+                            AI Package</button>
                     </div>
                 </div>
 
@@ -117,6 +142,60 @@ Panel 3: Looking at the sunset"></textarea>
                         <p>Enter your script and click 'Create Comic' to see the magic happen!</p>
                     </div>
                 </div>
+
+                <section class="reel-section">
+                    <div class="reel-header">
+                        <div>
+                            <h3>Reel</h3>
+                            <p>Create a short vertical reel that covers all comic panels, with optional narration, in a fun and kid-friendly style.</p>
+                        </div>
+                        <div class="reel-actions">
+                            <select id="video-model-selector" class="model-select compact">
+                                <option value="local-reel">Local Reel Builder</option>
+                                <option value="veo-3.1-generate-preview">Google Veo 3.1 (API Key)</option>
+                            </select>
+                            <button id="generate-video-btn" class="btn primary">
+                                <i class="fa-solid fa-film"></i> Generate Reel
+                            </button>
+                            <button id="download-video-btn" class="btn outline" disabled>
+                                <i class="fa-solid fa-download"></i> Download Reel
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="video-prompt-input" class="video-prompt" placeholder="Describe the reel you want to create..."></textarea>
+                    <textarea id="animation-prompt-input" class="video-prompt" placeholder="Describe how the MP4 scenes should animate, for example: slow zoom on the developer, pan across attack flow, parallax on defense scenes, subtle background change for impact panels."></textarea>
+                    <div class="narration-controls">
+                        <select id="audio-backend-selector" class="model-select compact">
+                            <option value="system">System Voice</option>
+                            <option value="piper">Piper Local</option>
+                        </select>
+                        <select id="voice-selector" class="model-select compact">
+                            <option value="Aman">Aman (Indian English)</option>
+                            <option value="Flo">Flo (Kids Style)</option>
+                            <option value="en_US-amy-medium">Piper Amy (Soft English)</option>
+                            <option value="en_US-lessac-medium">Piper Lessac (English)</option>
+                        </select>
+                        <input id="custom-voice-id" class="voice-input" placeholder="Optional voice override">
+                        <label class="btn outline" for="custom-audio-input">
+                            <i class="fa-solid fa-upload"></i> Use Own Voice
+                        </label>
+                        <input id="custom-audio-input" type="file" accept="audio/*" hidden>
+                        <button id="generate-audio-btn" class="btn outline">
+                            <i class="fa-solid fa-microphone-lines"></i> Generate Narration
+                        </button>
+                        <button id="play-reel-audio-btn" class="btn outline" disabled>
+                            <i class="fa-solid fa-play"></i> Play With Voice
+                        </button>
+                        <button id="download-audio-btn" class="btn outline" disabled>
+                            <i class="fa-solid fa-file-audio"></i> Download Audio
+                        </button>
+                    </div>
+                    <div id="video-status" class="video-status">No reel generated yet.</div>
+                    <div class="video-preview-shell">
+                        <video id="video-preview" class="video-preview" controls playsinline></video>
+                        <audio id="audio-preview" class="audio-preview" controls></audio>
+                    </div>
+                </section>
             </section>
         </main>
     </div>
@@ -137,7 +216,7 @@ Panel 3: Looking at the sunset"></textarea>
         <div><strong>Debug Console (Check here for errors)</strong></div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="script.js?v=20260409o"></script>
 </body>
 
 </html>

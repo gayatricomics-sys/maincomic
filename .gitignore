@@ -17,6 +17,11 @@ __pycache__/
 
 # Generated Content
 exports/
+node_modules/
+models/
 
 # Agent Artifacts
 .gemini/
+
+# Local scratch / unrelated folders
+claude-bug-bounty/
