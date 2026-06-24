@@ -15,11 +15,12 @@ export class LLMService {
         const systemPrompt = `You are a visual prompt engineer.
 Task: Convert the comic script into a concise visual description for an image generator (Stable Diffusion).
 Rules:
-1. Output ONLY the visual description. NO conversational filler.
+1. Output ONLY the visual description in English language. NO conversational filler.
 2. Focus on: Characters, Action, Setting, Lighting.
-3. Ignore dialogue.
-4. Max 40 words.
-5. If the script is abstract, describe a concrete metaphorical scene.`;
+3. BE SPECIFIC ABOUT BREEDS: If an animal is mentioned (like a dog), specify its breed and distinctive features (e.g., "Toy Poodle: small, curly white fur" vs "Golden Retriever: large, smooth golden coat").
+4. Ignore dialogue.
+5. Max 40 words.
+6. If the script is abstract, describe a concrete metaphorical scene.`;
 
         const fullPrompt = `${systemPrompt}\n\nUser Script: "${scriptText}"\n\nVisual Prompt:`;
         const provider = config.provider || 'ollama';

@@ -11,6 +11,9 @@ config.env
 # Python
 __pycache__/
 *.pyc
+.venv/
+.pip-cache/
+.npm-cache/
 
 # OS
 .DS_Store

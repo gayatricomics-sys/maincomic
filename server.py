@@ -23,7 +23,10 @@ import random
 import zipfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance, ImageOps
+try:
+    from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance, ImageOps
+except Exception:
+    Image = ImageDraw = ImageFont = ImageFilter = ImageEnhance = ImageOps = None
 
 LOCAL_VENV_SITE = os.path.expanduser('~/Openclaw/output/monetization_venv/lib/python3.14/site-packages')
 if os.path.isdir(LOCAL_VENV_SITE) and LOCAL_VENV_SITE not in sys.path:
@@ -56,6 +59,13 @@ LOCAL_IMAGE_PIPELINE = None
 LOCAL_IMAGE_DEVICE = None
 LOCAL_IMAGE_MODEL = os.environ.get('LOCAL_IMAGE_MODEL', 'segmind/tiny-sd')
 COMFYUI_API_BASE_URL_CACHE = None
+
+def require_pillow(feature_name):
+    if Image is None:
+        raise RuntimeError(
+            f'{feature_name} requires Pillow. Install it with: '
+            'python3 -m pip install -r requirements.txt'
+        )
 
 # ---------------------------------------------------------
 # Database Setup
@@ -174,6 +184,7 @@ def ensure_exports_dir():
 
 def get_local_image_pipeline():
     global LOCAL_IMAGE_PIPELINE, LOCAL_IMAGE_DEVICE
+    require_pillow('Local image generation')
     if LOCAL_IMAGE_PIPELINE is not None:
         return LOCAL_IMAGE_PIPELINE
     if AutoPipelineForText2Image is None or torch is None:
@@ -268,6 +279,7 @@ def local_generate_audio_piper(text, voice='en_US-lessac-medium'):
     return f"/exports/{os.path.basename(m4a_path)}"
 
 def _load_font(size):
+    require_pillow('Text overlays')
     font_paths = [
         '/System/Library/Fonts/Supplemental/Arial.ttf',
         '/System/Library/Fonts/Supplemental/Helvetica.ttc'
@@ -298,6 +310,8 @@ def _derive_animation_prompt(panel, global_prompt=''):
         motion = 'dynamic infographic motion with background transitions'
     elif any(word in lower for word in ['engineer', 'secure', 'block', 'protect', 'mitigation']):
         motion = 'heroic camera push with stable layered depth'
+    elif any(word in lower for word in ['dog', 'poodle', 'retriever', 'puppy', 'animal']):
+        motion = 'playful camera shake with bounce and joyful focus'
     else:
         motion = 'gentle cinematic zoom with clear scene emphasis'
     prompt_hint = _sanitize_bubble_text(global_prompt)
@@ -321,8 +335,8 @@ def _choose_motion_preset(panel, index, global_prompt=''):
         return 'background_change'
     if any(word in lower for word in ['hacker', 'attack', 'inject', 'malicious']):
         return 'pan'
-    if any(word in lower for word in ['engineer', 'secure', 'disable', 'blocked', 'shield']):
-        return 'parallax'
+    if any(word in lower for word in ['dog', 'poodle', 'retriever', 'puppy', 'animal']):
+        return 'zoom'
     return ['zoom', 'pan', 'parallax', 'background_change'][index % 4]
 
 def _choose_subtitle_template(text):
@@ -351,6 +365,7 @@ def _wrap_text(draw, text, font, max_width):
     return lines[:5]
 
 def _load_panel_image(src):
+    require_pillow('Panel image processing')
     raw_bytes = None
     content_type = ''
 
@@ -507,6 +522,7 @@ def _render_animated_panel_frames(panel, dest_dir, start_index, panel_index, glo
     return total_frames
 
 def local_generate_reel(panels, audio_path=None, animation_prompt=''):
+    require_pillow('Local reel generation')
     exports_dir = ensure_exports_dir()
     work_dir = tempfile.mkdtemp(prefix='comic_reel_')
     try:
@@ -597,6 +613,7 @@ def _threshold_image(image, threshold=72):
     return image.convert('L').point(lambda px: 255 if px > threshold else 0).convert('RGB')
 
 def _controlnet_guides(image):
+    require_pillow('ControlNet guide export')
     base = image.convert('RGB')
     canny_like = _threshold_image(base.convert('L').filter(ImageFilter.FIND_EDGES), threshold=48)
     lineart_like = ImageOps.invert(_threshold_image(ImageOps.grayscale(base).filter(ImageFilter.CONTOUR), threshold=136))
@@ -626,6 +643,12 @@ def _panel_motion_profile(panel):
             'zoom': '0:(1.00), 24:(1.05)',
             'translation_x': '0:(0), 24:(-12)',
             'translation_y': '0:(0), 24:(-4)'
+        }
+    if any(word in text for word in ['dog', 'poodle', 'retriever', 'puppy', 'animal']):
+        return {
+            'zoom': '0:(1.00), 24:(1.06)',
+            'translation_x': '0:(0), 24:(4)',
+            'translation_y': '0:(0), 24:(-10)'
         }
     return {
         'zoom': '0:(1.00), 24:(1.03)',
@@ -1377,6 +1400,7 @@ def _build_comfyui_starter_workflow():
     }
 
 def create_integration_package(data):
+    require_pillow('AI integration package export')
     panels = data.get('panels', [])
     if not panels:
         raise RuntimeError('No panels supplied for AI package export')
@@ -1563,6 +1587,7 @@ def _write_json(path, payload):
         json.dump(payload, handle, indent=2)
 
 def export_panel_to_comfyui(data):
+    require_pillow('ComfyUI panel export')
     panel = data.get('panel') or {}
     if not panel.get('imageUrl'):
         raise RuntimeError('Panel image is missing')
@@ -2530,6 +2555,7 @@ class MyRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(500, {'error': str(e)})
 
 
-with ReusableTCPServer(("", PORT), MyRequestHandler) as httpd:
-    print(f"Serving Auth Server at port {PORT}")
-    httpd.serve_forever()
+if __name__ == '__main__':
+    with ReusableTCPServer(("", PORT), MyRequestHandler) as httpd:
+        print(f"Serving ComicForge at http://localhost:{PORT}")
+        httpd.serve_forever()

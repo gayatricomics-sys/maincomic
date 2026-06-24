@@ -25,7 +25,12 @@ exports.handler = async function (event, context) {
     }
 
     // Security Whitelist
-    const allowedDomains = ['api-inference.huggingface.co', 'image.pollinations.ai'];
+    const allowedDomains = [
+        'api-inference.huggingface.co',
+        'image.pollinations.ai',
+        'gen.pollinations.ai',
+        'text.pollinations.ai'
+    ];
     try {
         const domain = new URL(targetUrl).hostname;
         if (!allowedDomains.includes(domain)) {

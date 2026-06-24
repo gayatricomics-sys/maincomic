@@ -1,7 +1,7 @@
-import { ImageService } from './image-service.js?v=20260409o';
-import { LLMService } from './llm-service.js?v=20260409o';
-import { VideoService } from './video-service.js?v=20260409o';
-import { AudioService } from './audio-service.js?v=20260409o';
+import { ImageService } from './image-service.js?v=20260513a';
+import { LLMService } from './llm-service.js?v=20260513a';
+import { VideoService } from './video-service.js?v=20260513a';
+import { AudioService } from './audio-service.js?v=20260513a';
 
 const imageService = new ImageService();
 const llmService = new LLMService();
@@ -24,6 +24,7 @@ const state = {
 
 // Styles Configuration
 const STYLES = [
+    { name: 'Kids Cartoon', icon: '🎨', promptSuffix: 'kids cartoon style, bright cheerful colors, friendly rounded characters, playful fun atmosphere, child-friendly illustration, soft shapes, happy expressive faces, storybook quality' },
     { name: 'Claymation', icon: '🧱', promptSuffix: 'claymation style, plasticine, aardman style, stop motion, cute, tactile texture' },
     { name: 'Origami', icon: '🦢', promptSuffix: 'origami style, paper folded art, papercraft, craft texture, 3d paper' },
     { name: 'Lego Style', icon: '🧩', promptSuffix: 'lego minifigures style, brick building, toy plastic texture, vibrant' },
@@ -376,6 +377,32 @@ function deriveEmotionHints(text) {
     return `Use expressive faces and body language with ${emotions.join(', ')}`;
 }
 
+function deriveBreedHints(text) {
+    const lower = (text || '').toLowerCase();
+    const breeds = [];
+
+    if (/\b(toy poodle|poodle|poodles)\b/.test(lower)) {
+        breeds.push('Toy Poodle: small size, elegant curly fur, distinctive poodle groom, alert expression');
+    }
+    if (/\b(golden retriever|retriever|retrievers)\b/.test(lower)) {
+        breeds.push('Golden Retriever: large size, smooth long golden coat, floppy ears, friendly wagging tail, gentle face');
+    }
+    if (/\b(labrador|lab)\b/.test(lower)) {
+        breeds.push('Labrador: medium-large size, short dense coat, powerful build, friendly active expression');
+    }
+    if (/\b(german shepherd)\b/.test(lower)) {
+        breeds.push('German Shepherd: large size, alert pointed ears, black and tan coat, strong athletic build');
+    }
+    if (/\b(pug)\b/.test(lower)) {
+        breeds.push('Pug: small size, wrinkled face, flat snout, curled tail, cute expressive eyes');
+    }
+    if (/\b(bulldog)\b/.test(lower)) {
+        breeds.push('Bulldog: medium size, stocky build, wrinkled face, wide stance, grumpy but cute look');
+    }
+
+    return breeds.length ? `Identify breeds clearly: ${breeds.join(', ')}` : '';
+}
+
 function deriveActionHints(text) {
     const lower = (text || '').toLowerCase();
     const actions = [];
@@ -404,18 +431,77 @@ function deriveActionHints(text) {
 }
 
 function toEnglishBubbleText(text) {
-    const normalized = (text || '')
+    if (!text || typeof text !== 'string') {
+        return 'A wonderful moment.';
+    }
+
+    // Step 1: Normalize unicode and remove non-English characters
+    let normalized = text
         .normalize('NFKD')
         .replace(/[^\x00-\x7F]/g, ' ')
-        .replace(/\bpanel\s*\d+\s*:/gi, ' ')
-        .replace(/\bcaption\s*:/gi, ' ')
-        .replace(/\b(dialogue|prompt|scene)\s*:/gi, ' ')
-        .replace(/[^A-Za-z0-9 .,!?'"():;\-]/g, ' ')
+        .replace(/[🍑🪔🐘🐵🔱🐚✨🌞🌻🌼🌟]/g, ' ');
+
+    // Step 2: Remove metadata markers and formatting
+    normalized = normalized
+        .replace(/\bpanel\s*\d+\s*[:.)\-]?\s*/gi, ' ')
+        .replace(/\b(caption|dialogue|prompt|scene|description|visual|script|title|visual prompt)\s*[:.)\-]?\s*/gi, ' ')
+        .replace(/^\s*["'\-*]+/, '')
+        .replace(/["'\-*]+\s*$/, '');
+
+    // Step 3: Look for actual dialogue patterns (e.g., "Character: Hello there!")
+    const dialoguePattern = /["']?([A-Za-z]+)\s*:\s*["']?([^"'.!?]+[.!?])["']?/i;
+    const dialogueMatch = normalized.match(dialoguePattern);
+    if (dialogueMatch) {
+        const spoken = dialogueMatch[2].trim();
+        if (spoken.length > 3 && spoken.split(/\s+/).length >= 2) {
+            return spoken.charAt(0).toUpperCase() + spoken.slice(1);
+        }
+    }
+
+    // Step 4: Look for quoted speech "Hello there"
+    const quotePattern = /"([^"]{5,100})"/;
+    const quoteMatch = normalized.match(quotePattern);
+    if (quoteMatch) {
+        const spoken = quoteMatch[1].trim();
+        if (spoken.length > 3) {
+            if (!spoken.match(/[.!?]$/)) {
+                return spoken.charAt(0).toUpperCase() + spoken.slice(1) + '.';
+            }
+            return spoken.charAt(0).toUpperCase() + spoken.slice(1);
+        }
+    }
+
+    // Step 5: Extract the first meaningful English sentence
+    const sentencePattern = /[A-Z][a-z]*(?:\s+[a-z]+){2,15}[.!?]/i;
+    const sentenceMatch = normalized.match(sentencePattern);
+
+    if (sentenceMatch) {
+        let sentence = sentenceMatch[0].trim();
+        if (!sentence.match(/[.!?]$/)) {
+            sentence += '.';
+        }
+        return sentence;
+    }
+
+    // Step 6: Fallback - clean up remaining text and ensure it's English letters only
+    let cleaned = normalized
+        .replace(/[^A-Za-z0-9 .,!?':;\-]/g, ' ')
         .replace(/([!?.,])\1+/g, '$1')
         .replace(/\s+/g, ' ')
         .trim();
 
-    return normalized || 'Panel description';
+    // Step 7: Final validation and formatting
+    if (!cleaned || cleaned.length < 5 || !/[a-zA-Z]/.test(cleaned)) {
+        return 'A wonderful moment.';
+    }
+
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+
+    if (!cleaned.match(/[.!?]$/)) {
+        cleaned = cleaned.replace(/[,;]$/, '') + '.';
+    }
+
+    return cleaned;
 }
 
 function deriveSceneRoleHints(text) {
@@ -436,6 +522,7 @@ function deriveCinematicScenePrompt(panelInput) {
     const panel = typeof panelInput === 'string' ? { text: panelInput } : (panelInput || {});
     const englishText = toEnglishBubbleText(panel.text || '');
     const visualCore = buildVisualPrompt(englishText) || englishText;
+    const breedHints = deriveBreedHints(panel.text || englishText);
     const roleHints = deriveSceneRoleHints(englishText);
     const characterHints = deriveCharacterPresenceHints(panel.text || englishText);
     const emotionHints = deriveEmotionHints(panel.text || englishText);
@@ -460,6 +547,7 @@ function deriveCinematicScenePrompt(panelInput) {
 
     return [
         visualCore,
+        breedHints,
         roleHints,
         characterHints,
         emotionHints,
@@ -509,7 +597,7 @@ function buildContextualImagePrompt(panelInput) {
     const panel = typeof panelInput === 'string' ? { text: panelInput } : (panelInput || {});
     const visualCore = deriveCinematicScenePrompt(panel);
     return [
-        'Create one educational comic panel image in English context only.',
+        'Create one high-quality educational comic panel image in English context only.',
         `Scene context: ${visualCore}.`,
         'Make the named characters accurate to the script and keep their visual role clear in the scene.',
         'Make all characters look cute, appealing, expressive, and attractive for kids.',
@@ -518,9 +606,11 @@ function buildContextualImagePrompt(panelInput) {
         'Show the full scene clearly so the viewer immediately understands what is happening.',
         'Keep main character faces visible and unobstructed.',
         'Place speaking space away from faces, leaving open negative space near a panel edge for the app bubble overlay.',
-        'Do not draw any words, letters, subtitles, speech bubbles, symbols, interface text, signs, or captions inside the artwork.',
+        'CRITICAL: ABSOLUTELY NO TEXT IN IMAGE. NO words, NO letters, NO numbers, NO subtitles, NO speech bubbles, NO symbols, NO interface text, NO signs, NO book pages, NO screens with readable content, NO captions inside the artwork.',
+        'NO GIBBERISH: Avoid random squiggles that look like fake writing, avoid letter-like patterns, avoid text-like textures.',
+        'PURE VISUALS ONLY: Show actions, expressions, and scenes through imagery alone without any written elements.',
         'All readable text will be added by the app overlay in English only.',
-        'No non-English writing, no gibberish text, no extra labels, no watermark.'
+        'Clean professional image with zero writing, zero text, zero letters, zero symbols, zero watermarks.'
     ].join(' ');
 }
 

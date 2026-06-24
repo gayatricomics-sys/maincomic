@@ -1,3 +1,28 @@
+class LocalProvider {
+    constructor() {
+        this.name = 'Local (SD)';
+    }
+
+    async generate(prompt, config = {}) {
+        const response = await fetch('/api/local/image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Local image generation failed: HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return data.url;
+    }
+}
+
 class PollinationsProvider {
     constructor(modelName) {
         this.model = modelName || '';
@@ -5,18 +30,26 @@ class PollinationsProvider {
     }
 
     async generate(prompt, config = {}) {
-        const safePrompt = encodeURIComponent(prompt);
+        // Add strong negative weighting to the prompt itself for text exclusion
+        const textExclusion = ', NO TEXT IN IMAGE, absolutely no words, no letters, no writing, no captions, no subtitles, no watermarks, no logos, no signatures, clean image without any readable characters';
+        const enhancedPrompt = prompt + textExclusion;
+        const safePrompt = encodeURIComponent(enhancedPrompt);
         const seed = config.seed || Math.floor(Math.random() * 1000000);
         const params = new URLSearchParams({
             width: '1280',
             height: '1280',
-            seed: String(seed)
+            seed: String(seed),
+            nologo: 'true'
         });
 
         const model = config.model || this.model;
         if (model) {
             params.set('model', model);
         }
+
+        // Add negative prompt to exclude text from images
+        const negativePrompt = 'text, words, letters, writing, caption, subtitle, speech bubble, comic bubble, callout, thought bubble, dialogue box, watermark, signature, logo, gibberish text, random letters, unreadable text, text-like patterns, alphabet, numbers, signage, book pages, readable screens, typography, font, typeface';
+        params.set('negative_prompt', negativePrompt);
 
         const targetUrl = `https://gen.pollinations.ai/image/${safePrompt}?${params.toString()}`;
         return `/proxy?url=${encodeURIComponent(targetUrl)}`;
@@ -34,14 +67,12 @@ function enhancePromptForQuality(prompt) {
         'professional illustration',
         'consistent anatomy',
         'cinematic lighting',
-        'no watermark',
-        'no text inside image',
-        'no letters',
-        'no words',
-        'no subtitles',
-        'no foreign language characters',
-        'no gibberish typography',
-        'overlay text handled separately'
+        'ABSOLUTELY NO TEXT: image must contain zero words, zero letters, zero numbers, zero readable characters',
+        'no watermark, no logo, no signature, no text overlay of any kind',
+        'no gibberish squiggles or fake letter patterns',
+        'no book pages, no screens with text, no signs with writing',
+        'pure visual storytelling with imagery only',
+        'overlay text handled separately by app'
     ].join(', ');
 }
 
@@ -51,7 +82,8 @@ export class ImageService {
         this.providers = [
             new PollinationsProvider(''),
             new PollinationsProvider('flux'),
-            new PollinationsProvider('turbo')
+            new PollinationsProvider('turbo'),
+            new LocalProvider()  // Fallback to local SD
         ];
         this.cache = new Map();
     }

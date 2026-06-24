@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "AI Comic Generator",
+  "scripts": {
+    "start": "python3 server.py",
+    "test:llm": "node test_llm_logic.js"
+  },
   "dependencies": {
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
