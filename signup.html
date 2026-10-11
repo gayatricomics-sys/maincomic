@@ -62,8 +62,9 @@
     <div class="auth-container">
         <h2><i class="fa-solid fa-user-plus"></i> Sign Up</h2>
         <form id="signup-form">
-            <input type="email" id="email" class="auth-input" placeholder="Email" required>
-            <input type="password" id="password" class="auth-input" placeholder="Password" required>
+            <input type="text" id="username" class="auth-input" placeholder="Username" required autocomplete="username">
+            <input type="email" id="email" class="auth-input" placeholder="Email (optional)" autocomplete="email">
+            <input type="password" id="password" class="auth-input" placeholder="Password" required autocomplete="new-password">
             <button type="submit" class="auth-btn">Create Account</button>
         </form>
         <div class="links">
@@ -73,12 +74,14 @@
     <script>
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             try {
                 const res = await fetch('/api/auth/signup', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
                 });
                 const data = await res.json();
 

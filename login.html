@@ -62,8 +62,8 @@
     <div class="auth-container">
         <h2><i class="fa-solid fa-bolt"></i> Login</h2>
         <form id="login-form">
-            <input type="email" id="email" class="auth-input" placeholder="Email" required>
-            <input type="password" id="password" class="auth-input" placeholder="Password" required>
+            <input type="text" id="username" class="auth-input" placeholder="Username (e.g. gayatricomics-sys)" required autocomplete="username">
+            <input type="password" id="password" class="auth-input" placeholder="Password" required autocomplete="current-password">
             <button type="submit" class="auth-btn">Log In</button>
         </form>
         <div class="links">
@@ -75,26 +75,28 @@
     <script>
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
 
             try {
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
 
                 if (data.status === 'success') {
                     localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userName', data.username || username);
+                    localStorage.setItem('userEmail', data.email || data.username || username);
                     localStorage.setItem('userRole', data.role);
                     window.location.href = 'index.html';
                 } else {
-                    alert(data.error);
+                    alert(data.error || "Login failed");
                 }
             } catch (err) {
-                alert("Login failed");
+                alert("Login failed: " + err.message);
             }
         });
     </script>

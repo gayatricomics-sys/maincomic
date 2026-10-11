@@ -103,6 +103,8 @@ def init_db():
     except: pass
     try: c.execute("ALTER TABLE users ADD COLUMN salt TEXT")
     except: pass
+    try: c.execute("ALTER TABLE users ADD COLUMN username TEXT")
+    except: pass
 
     conn.commit()
     conn.close()
@@ -1832,17 +1834,33 @@ class MyRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         sys.stderr.write(f"DEBUG: do_GET called with path: {self.path}\n")
         
+        if self.path == '/api/admin/check':
+             token = self.headers.get('Authorization', '').replace('Bearer ', '')
+             conn = get_db_connection()
+             cur = conn.cursor()
+             cur.execute("SELECT u.email, u.role, u.username FROM tokens t JOIN users u ON t.email = u.email WHERE t.token = ? AND t.type = 'session' AND t.expires_at > ?", (token, time.time()))
+             user = cur.fetchone()
+             conn.close()
+             if user and user['role'] == 'admin':
+                 uname = user['username'] if user['username'] else user['email'].split('@')[0]
+                 self.send_json(200, {'isAdmin': True, 'username': uname, 'email': user['email']})
+             else:
+                 self.send_json(403, {'isAdmin': False, 'error': 'Forbidden'})
+             return
+
         if self.path == '/api/user/me':
              token = self.headers.get('Authorization', '').replace('Bearer ', '')
              conn = get_db_connection()
              cur = conn.cursor()
-             cur.execute("SELECT u.email, u.role, u.credits FROM tokens t JOIN users u ON t.email = u.email WHERE t.token = ? AND t.type = 'session' AND t.expires_at > ?", (token, time.time()))
+             cur.execute("SELECT u.email, u.role, u.credits, u.username FROM tokens t JOIN users u ON t.email = u.email WHERE t.token = ? AND t.type = 'session' AND t.expires_at > ?", (token, time.time()))
              user = cur.fetchone()
              conn.close()
              
              if user:
+                  uname = user['username'] if ('username' in user.keys() and user['username']) else user['email'].split('@')[0]
                   self.send_json(200, {
                       'email': user['email'], 
+                      'username': uname,
                       'role': user['role'], 
                       'credits': user['credits']
                   })
@@ -1905,35 +1923,41 @@ class MyRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def auth_signup(self, data):
         client_ip = self.client_address[0]
-        if not check_rate_limit(client_ip, limit=3, window=60):
+        if not check_rate_limit(client_ip, limit=10, window=60):
             self.send_json(429, {'error': 'Rate limit exceeded'})
             return
         
-        email = data.get('email')
+        username = (data.get('username') or '').strip()
+        email = (data.get('email') or '').strip()
         password = data.get('password')
         
-        if not email or not password:
-             self.send_json(400, {'error': 'Missing email or password'})
+        if not username and not email:
+             self.send_json(400, {'error': 'Missing username'})
              return
         
-        if not validate_email(email):
-             self.send_json(400, {'error': 'Invalid email format'})
+        if not username:
+             username = email.split('@')[0]
+        if not email:
+             email = f"{username}@comicforge.local"
+             
+        if not password:
+             self.send_json(400, {'error': 'Missing password'})
              return
 
         conn = get_db_connection()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT * FROM users WHERE email = ?", (email,))
+            cur.execute("SELECT * FROM users WHERE email = ? OR username = ?", (email, username))
             if cur.fetchone():
-                self.send_json(400, {'error': 'User already exists'})
+                self.send_json(400, {'error': 'Username or email already exists'})
                 return
             
-            role = 'admin' if email == 'gayathri5670@gmail.com' else 'user'
+            role = 'admin' if (email == 'gayathri5670@gmail.com' or username == 'gayatricomics-sys' or username == 'admin') else 'user'
             salt = generate_salt()
             pw_hash = hash_password(password, salt)
             
-            cur.execute("INSERT INTO users (email, password_hash, salt, role, created_at) VALUES (?, ?, ?, ?, ?)",
-                        (email, pw_hash, salt, role, time.time()))
+            cur.execute("INSERT INTO users (email, username, password_hash, salt, role, credits, created_at) VALUES (?, ?, ?, ?, ?, 100, ?)",
+                        (email, username, pw_hash, salt, role, time.time()))
             conn.commit()
             self.send_json(201, {'status': 'success', 'message': 'User created'})
         except Exception as e:
@@ -1945,15 +1969,30 @@ class MyRequestHandler(http.server.SimpleHTTPRequestHandler):
             conn.close()
 
     def auth_login(self, data):
-        email = data.get('email')
+        identifier = (data.get('username') or data.get('email') or '').strip()
         password = data.get('password')
+        if not identifier or not password:
+            self.send_json(400, {'error': 'Username and password are required'})
+            return
+
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE email = ?", (email,))
+        cur.execute("SELECT * FROM users WHERE username = ? OR email = ?", (identifier, identifier))
         user = cur.fetchone()
         
+        # Auto-create admin account if gayatricomics-sys logs in for the first time
+        if not user and identifier.lower() == 'gayatricomics-sys':
+            salt = generate_salt()
+            pw_hash = hash_password(password, salt)
+            admin_email = 'gayathri5670@gmail.com'
+            cur.execute("INSERT INTO users (email, username, password_hash, salt, role, credits, created_at) VALUES (?, ?, ?, ?, 'admin', 9999, ?)",
+                        (admin_email, 'gayatricomics-sys', pw_hash, salt, time.time()))
+            conn.commit()
+            cur.execute("SELECT * FROM users WHERE username = ?", ('gayatricomics-sys',))
+            user = cur.fetchone()
+
         valid = False
-        if user:
+        if user and password:
             stored_hash = user['password_hash']
             salt = user['salt']
             
@@ -1966,19 +2005,26 @@ class MyRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if legacy_hash == stored_hash:
                     new_salt = generate_salt()
                     new_hash = hash_password(password, new_salt)
-                    cur.execute("UPDATE users SET password_hash = ?, salt = ? WHERE email = ?", (new_hash, new_salt, email))
+                    cur.execute("UPDATE users SET password_hash = ?, salt = ? WHERE email = ?", (new_hash, new_salt, user['email']))
                     conn.commit()
                     valid = True
 
         if valid:
             token = generate_token()
-            expires = time.time() + 86400
+            expires = time.time() + 86400 * 30
             cur.execute("INSERT INTO tokens (token, email, type, expires_at) VALUES (?, ?, 'session', ?)",
-                        (token, email, expires))
+                        (token, user['email'], expires))
             conn.commit()
-            self.send_json(200, {'status': 'success', 'token': token, 'role': user['role']})
+            user_uname = user['username'] if ('username' in user.keys() and user['username']) else user['email'].split('@')[0]
+            self.send_json(200, {
+                'status': 'success', 
+                'token': token, 
+                'role': user['role'],
+                'username': user_uname,
+                'email': user['email']
+            })
         else:
-            self.send_json(401, {'error': 'Invalid credentials'})
+            self.send_json(401, {'error': 'Invalid username or password'})
         conn.close()
 
     def auth_change_password(self, data):

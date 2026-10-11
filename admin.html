@@ -42,7 +42,7 @@
                 if (data.isAdmin) {
                     document.getElementById('content').innerHTML = `
                         <p>Status: <strong>AUTHORIZED</strong></p>
-                        <p>User: gayathri5670@gmail.com</p>
+                        <p>User: ${data.username || data.email || "gayatricomics-sys"}</p>
                         <p>System Status: Operational</p>
                     `;
                 } else {
